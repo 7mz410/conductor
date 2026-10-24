@@ -34,10 +34,14 @@ All technical substance stays; only fluff goes.
 
 ## 2. Build (laziest code that works)
 
-The best code is the code never written. Trace the real flow end to end, then stop at the first rung that holds:
+The best code is the code never written. Be lazy about the solution, never about the change.
 
-1. Does it need to exist? Speculative need: skip, say so in one line.
-2. Does it already exist in this codebase? Reuse it. Search before writing.
+**Before writing, map scope:** read the code it touches and list every place the change must reach (callers, tests, fixtures, config, exports) and what it could break for users (data destroyed or exposed, callers that stop working). That is scope; extra features are not.
+
+Then stop at the first rung that holds:
+
+1. Does it need to exist? Speculative need: skip, say so in one line. A vague request ("build me X") gets the smallest version that does the core job.
+2. Does it already exist in this codebase? Reuse it the way the surrounding code does. Search before writing. A house component beats a native widget.
 3. Standard library?
 4. Native platform feature? (`<input type="date">`, CSS over JS, DB constraint over app code.)
 5. Already-installed dependency? Never add a dependency for a few lines.
@@ -45,15 +49,18 @@ The best code is the code never written. Trace the real flow end to end, then st
 7. Only then: the minimum code that works.
 
 **Rules**
-- **Bug fix = root cause.** Find every caller, fix the shared function once.
+- **Bug fix = root cause.** Grep every caller before editing, fix the shared function once.
+- Finish every part the change breaks: callers, tests, fixtures. The shortest diff wins only once you know everything it must touch; a one-liner that needs decoding is not short.
+- Code you move or merge keeps its error handling and validation. Keep values in the form the platform gives you; no needless wrappers or type conversions.
 - No unrequested abstractions: no single-implementation interfaces, no one-product factories, no config for constants, no scaffolding "for later".
 - Deletion over addition, boring over clever, fewest files touched. Equal size: pick the one correct on edge cases.
-- Known shortcut limits get a marker in code: `TODO(limit): <limit>, <upgrade path>`.
-- Non-trivial logic leaves one small runnable check (assert self-check or one test file).
+- Known shortcut limits get a marker in code: `shortcut: <the limit>, <when to upgrade>` (older `TODO(limit):` markers still count; grep both).
+- Non-trivial logic (a branch, loop, parser, money, security, or a new script) leaves one small runnable check (assert self-check or one test file). Trivial changes need none.
+- Comment only the why the code cannot show, in one line.
 - **Never simplify away:** validation at trust boundaries, error handling that prevents data loss, security, accessibility, anything explicitly requested.
 - Match the surrounding code: naming, comment density, idiom.
-- **Output:** code first, then at most three lines on what was skipped and when to add it.
-- **Levels:** `/conductor build lite|full|ultra`.
+- **Output:** code first, then end the reply with one or two lines: what was skipped or not checked, and any risk the user must know.
+- **Levels:** `/conductor build lite|full|ultra`. lite: build what was asked, name the smaller option in one line. full: the rules above (default). ultra: also push back on any part of the request the need does not justify, before building.
 
 ---
 
@@ -68,8 +75,6 @@ The best code is the code never written. Trace the real flow end to end, then st
 - **Motion:** only with purpose, 150–300 ms, `transform`/`opacity` only.
 - **Copy:** buttons say what they do. No placeholder text shipped.
 - **Before handoff:** render and look, both themes, desktop and mobile, RTL if relevant. If you didn't look, say so.
-
----
 
 ---
 
@@ -119,7 +124,8 @@ Report: changed files, the check you ran with its output line and a timestamp, a
 
 **Verification**
 - **Deterministic checks beat opinions.** If you catch yourself judging something by reasoning twice, have a worker add a script or test for it.
-- Read the diff (`git diff`), not just the report. Reports can be wrong.
+- Read the diff (`git diff`), not just the report. Reports can be wrong. Read the code the diff touches too, not only the changed lines.
+- **Review checks** (own review, or `code-review`): bugs, security, behaviour under real load, missing tests, speed, and what to cut. Each finding says what the code does, what goes wrong, the fix, and what happens if skipped.
 - Run the "done when" check yourself, or through the checker. **Check results are fresh**: compare timestamps; Haiku can copy numbers from an old results file.
 - **At most 2 fix rounds per task.** Send corrections to the same agent (SendMessage) with the exact failing line. After the second failure, either do it yourself or revert only that task's files, mark it `[blocked: reason]` and move on.
 - Passes: commit right away, one logical change per commit.
