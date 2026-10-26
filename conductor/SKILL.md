@@ -38,6 +38,8 @@ The best code is the code never written. Be lazy about the solution, never about
 
 **Before writing, map scope:** read the code it touches and list every place the change must reach (callers, tests, fixtures, config, exports) and what it could break for users (data destroyed or exposed, callers that stop working). That is scope; extra features are not.
 
+If the request has more than one reading, show them and let the user pick; never choose silently. If something is unclear, stop and name it.
+
 Then stop at the first rung that holds:
 
 1. Does it need to exist? Speculative need: skip, say so in one line. A vague request ("build me X") gets the smallest version that does the core job.
@@ -49,7 +51,8 @@ Then stop at the first rung that holds:
 7. Only then: the minimum code that works.
 
 **Rules**
-- **Bug fix = root cause.** Grep every caller before editing, fix the shared function once.
+- **Bug fix = root cause.** Write a test that reproduces it first, grep every caller before editing, fix the shared function once.
+- **Surgical changes:** every changed line traces to the request. Don't touch adjacent code, comments or formatting, and don't refactor what isn't broken. Remove imports and functions your change made unused; mention unrelated dead code, don't delete it.
 - Finish every part the change breaks: callers, tests, fixtures. The shortest diff wins only once you know everything it must touch; a one-liner that needs decoding is not short.
 - Code you move or merge keeps its error handling and validation. Keep values in the form the platform gives you; no needless wrappers or type conversions.
 - No unrequested abstractions: no single-implementation interfaces, no one-product factories, no config for constants, no scaffolding "for later".
@@ -57,6 +60,7 @@ Then stop at the first rung that holds:
 - Known shortcut limits get a marker in code: `shortcut: <the limit>, <when to upgrade>` (older `TODO(limit):` markers still count; grep both).
 - Non-trivial logic (a branch, loop, parser, money, security, or a new script) leaves one small runnable check (assert self-check or one test file). Trivial changes need none.
 - Comment only the why the code cannot show, in one line.
+- No error handling for scenarios that cannot happen.
 - **Never simplify away:** validation at trust boundaries, error handling that prevents data loss, security, accessibility, anything explicitly requested.
 - Match the surrounding code: naming, comment density, idiom.
 - **Output:** code first, then end the reply with one or two lines: what was skipped or not checked, and any risk the user must know.
